@@ -1,0 +1,32 @@
+<article class="news-card card">
+  <a
+    [routerLink]="['/details', article.id]"
+    [queryParams]="{ category: article.category }"
+    [state]="{ article: article }"
+  >
+    <div class="image-wrapper">
+      <img
+        *ngIf="!imageError"
+        [src]="article.imageUrl"
+        [alt]="article.title"
+        (error)="onImageError()"
+      />
+      <div *ngIf="imageError" class="image-fallback">
+        {{ article.category | titlecase }}
+      </div>
+    </div>
+
+    <div class="content">
+      <span class="category-pill">{{ article.category | titlecase }}</span>
+
+      <h3>{{ article.title }}</h3>
+      <p class="description">{{ article.description }}</p>
+
+      <div class="meta">
+        <span>{{ article.sourceName }}</span>
+        <span>◷ {{ article.readTime }} min read</span>
+        <span>{{ article.publishedAt | date:'M/d/yyyy' }}</span>
+      </div>
+    </div>
+  </a>
+</article>

@@ -1,0 +1,52 @@
+<div class="filter-wrapper">
+  <div class="filter-title-row">
+    <span class="filter-icon">⌄</span>
+    <h2>Filter by Category</h2>
+  </div>
+
+  <div class="chips">
+    <button
+      *ngFor="let category of categories"
+      type="button"
+      class="chip"
+      [class.active]="category.value === selectedCategory"
+      (click)="onSelect(category.value)"
+    >
+      {{ category.label }}
+    </button>
+  </div>
+
+  <div class="extra-filters">
+    <label class="filter-field">
+      <span>Filter by Country</span>
+      <select [value]="filters.country" (change)="onCountryChange($event)">
+        <option *ngFor="let option of countryOptions" [value]="option.value">
+          {{ option.label }}
+        </option>
+      </select>
+    </label>
+
+    <label class="filter-field">
+      <span>Filter by Source</span>
+      <select [value]="filters.source" (change)="onSourceChange($event)">
+        <option *ngFor="let option of sourceOptions" [value]="option.value">
+          {{ option.label }}
+        </option>
+      </select>
+    </label>
+
+    <label class="filter-field">
+      <span>Filter by Date</span>
+      <input type="date" [value]="filters.date" (change)="onDateChange($event)" />
+    </label>
+
+    <label class="filter-field">
+      <span>Filter by Data Type</span>
+      <select [value]="filters.dataType" (change)="onDataTypeChange($event)">
+        <option *ngFor="let option of dataTypeOptions" [value]="option.value">
+          {{ option.label }}
+        </option>
+      </select>
+    </label>
+  </div>
+</div>

@@ -1,0 +1,33 @@
+<div class="text-center mb-3">
+    <h4>Choose your interests</h4>
+    <p class="text-muted">Select topics you want to follow</p>
+    @if (errorMessage) {
+    <div class="alert alert-danger py-2 small">{{ errorMessage }}</div>
+    }
+</div>
+
+@if (interests.length === 0 && !errorMessage) {
+<div class="text-center py-4">
+    <div class="spinner-border spinner-border-sm text-secondary mb-2"></div>
+    <p class="text-muted small">Loading topics...</p>
+</div>
+}
+
+<div class="row g-2 mb-3">
+    @for (interest of interests; track interest.id) {
+    <div class="col-6">
+        <div class="border rounded p-2 text-start" [class.bg-dark]="selected.includes(interest.id)"
+            [class.text-white]="selected.includes(interest.id)" style="cursor: pointer;"
+            (click)="toggleInterest(interest.id)">
+            {{ interest.name }}
+        </div>
+    </div>
+    }
+</div>
+
+<p class="text-muted">Selected: {{ selected.length }} topic(s)</p>
+
+<div class="d-flex gap-2">
+    <button class="btn btn-secondary w-50" (click)="back.emit()">← Back</button>
+    <button class="btn btn-dark w-50" (click)="submit()" [disabled]="selected.length === 0">Complete</button>
+</div>

@@ -1,0 +1,93 @@
+.filter-wrapper {
+  margin-top: 38px;
+}
+
+.filter-title-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.filter-title-row h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.filter-icon {
+  font-size: 1.3rem;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.chip {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 12px 18px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.chip.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.extra-filters {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.filter-field {
+  display: grid;
+  gap: 8px;
+}
+
+.filter-field span {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.filter-field select,
+.filter-field input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.filter-field select:focus-visible,
+.filter-field input:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+:host-context([data-theme='dark']) .chip.active {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+@media (max-width: 1024px) {
+  .extra-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .extra-filters {
+    grid-template-columns: 1fr;
+  }
+}

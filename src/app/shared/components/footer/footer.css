@@ -1,0 +1,35 @@
+.site-footer {
+  margin-top: 52px;
+  border-top: 1px solid var(--border);
+  padding: 28px 0;
+  background: transparent;
+}
+
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer-icon {
+  font-size: 1.2rem;
+}
+
+.site-footer p {
+  margin: 0;
+  color: var(--muted);
+}
+
+@media (max-width: 768px) {
+  .footer-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

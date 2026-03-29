@@ -1,0 +1,78 @@
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--header-bg);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+
+.header-inner {
+  height: 82px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 800;
+  font-size: 2rem;
+}
+
+.brand-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  font-size: 1.25rem;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.theme-btn,
+.login-link,
+.signup-btn {
+  border-radius: 14px;
+}
+
+.theme-btn {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+
+.theme-btn:hover {
+  filter: brightness(1.05);
+}
+
+.login-link {
+  color: var(--text);
+}
+
+.signup-btn {
+  background: var(--primary);
+  color: #fff;
+  padding: 14px 22px;
+  font-weight: 600;
+}
+
+:host-context([data-theme='dark']) .signup-btn {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}

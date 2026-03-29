@@ -1,0 +1,57 @@
+<app-header></app-header>
+
+<main class="container details-page">
+  <section *ngIf="loading" class="state-box card">
+    <p>Loading article details...</p>
+  </section>
+
+  <section *ngIf="!loading && error" class="state-box card error-box">
+    <a routerLink="/" class="back-link" aria-label="Back to News Feed">&larr; Back to News Feed</a>
+    <p>{{ error }}</p>
+  </section>
+
+  <article *ngIf="!loading && !error && article" class="details-card">
+    <a routerLink="/" class="back-link" aria-label="Back to News Feed">&larr; Back to News Feed</a>
+
+    <div class="meta-line">
+      <span class="category-pill">{{ article.category | titlecase }}</span>
+      <span class="source-name">{{ article.sourceName }}</span>
+      <span class="meta-separator">&middot;</span>
+      <span>{{ article.publishedAt | date:'MMM d, yyyy' }}</span>
+      <span class="read-time">{{ article.readTime }} min read</span>
+    </div>
+
+    <h1>{{ article.title }}</h1>
+
+    <div class="action-row">
+      <span class="byline">By {{ article.sourceName }}</span>
+      <button type="button" class="action-btn save-btn" aria-label="Save Article">Save Article</button>
+      <button type="button" class="action-btn ask-btn" aria-label="Ask AI">Ask AI</button>
+    </div>
+
+    <img [src]="article.imageUrl" [alt]="article.title" class="article-image" />
+
+    <p class="body-copy">{{ article.content }}</p>
+    <a
+      class="source-btn"
+      [href]="article.url"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Open original news source"
+    >
+      Voir la source de l'actualite
+    </a>
+
+    <hr class="separator" />
+
+    <section class="comments" aria-labelledby="comments-heading">
+      <h2 id="comments-heading" class="comments-heading">Comments (2)</h2>
+      <div class="comment-box">
+        <p>You need to be logged in to comment</p>
+        <a class="login-btn" [href]="article.url" target="_blank" rel="noopener noreferrer">
+          Log in to Comment
+        </a>
+      </div>
+    </section>
+  </article>
+</main>

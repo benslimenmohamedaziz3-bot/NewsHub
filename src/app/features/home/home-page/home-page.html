@@ -1,0 +1,42 @@
+<app-header></app-header>
+<app-hero-banner></app-hero-banner>
+
+<main class="container home-page">
+  <section class="intro">
+    <h2 class="section-title">Latest News</h2>
+    <p class="section-subtitle">
+      Stay informed with the latest news from around the world.
+    </p>
+  </section>
+
+  <app-category-filter
+    [categories]="categories"
+    [selectedCategory]="filters.category"
+    [countryOptions]="countryOptions"
+    [sourceOptions]="sourceOptions"
+    [dataTypeOptions]="dataTypeOptions"
+    [filters]="filters"
+    (filtersChange)="onFiltersChange($event)"
+  ></app-category-filter>
+
+  <section *ngIf="loading" class="state-box card">
+    <p>Loading news...</p>
+  </section>
+
+  <section *ngIf="!loading && error" class="state-box card error-box">
+    <p>{{ error }}</p>
+  </section>
+
+  <section *ngIf="!loading && !error && visibleArticles.length === 0" class="state-box card">
+    <p>No articles found for the selected filters.</p>
+  </section>
+
+  <section *ngIf="!loading && !error && visibleArticles.length > 0" class="news-grid">
+    <app-news-card
+      *ngFor="let article of visibleArticles; trackBy: trackByArticle"
+      [article]="article"
+    ></app-news-card>
+  </section>
+</main>
+
+<app-footer></app-footer>
