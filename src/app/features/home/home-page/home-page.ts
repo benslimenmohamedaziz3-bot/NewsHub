@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Component, OnInit, inject } from '@angular/core';
+import { AuthService } from '../../../core/services/auth';
 import { CATEGORY_OPTIONS } from '../../../core/models/category.model';
 import {
   COUNTRY_OPTIONS,
@@ -11,11 +12,11 @@ import {
 } from '../../../core/models/filter.model';
 import { NewsArticle } from '../../../core/models/news.model';
 import { NewsService } from '../../../core/services/news';
+import { CategoryFilterComponent } from '../../../shared/components/category-filter/category-filter';
+import { FooterComponent } from '../../../shared/components/footer/footer';
 import { HeaderComponent } from '../../../shared/components/header/header';
 import { HeroBannerComponent } from '../../../shared/components/hero-banner/hero-banner';
-import { CategoryFilterComponent } from '../../../shared/components/category-filter/category-filter';
 import { NewsCardComponent } from '../../../shared/components/news-card/news-card';
-import { FooterComponent } from '../../../shared/components/footer/footer';
 
 @Component({
   selector: 'app-home-page',
@@ -33,9 +34,7 @@ import { FooterComponent } from '../../../shared/components/footer/footer';
 })
 export class HomePageComponent implements OnInit {
   private readonly newsService = inject(NewsService);
-  private readonly rateLimitWindowMs = 15 * 60 * 1000;
-  private rateLimitedUntil = 0;
-  private pendingLoadId: ReturnType<typeof setTimeout> | null = null;
+  private readonly authService = inject(AuthService);
 
   readonly categories = CATEGORY_OPTIONS;
   readonly countryOptions = COUNTRY_OPTIONS;
@@ -53,15 +52,7 @@ export class HomePageComponent implements OnInit {
 
   onFiltersChange(filters: NewsFilters): void {
     this.filters = { ...filters };
-
-    if (this.pendingLoadId) {
-      clearTimeout(this.pendingLoadId);
-    }
-
-    this.pendingLoadId = setTimeout(() => {
-      this.pendingLoadId = null;
-      this.loadNews();
-    }, 350);
+    this.loadNews();
   }
 
   trackByArticle(_: number, article: NewsArticle): string {
@@ -69,19 +60,25 @@ export class HomePageComponent implements OnInit {
   }
 
   private loadNews(): void {
-    const now = Date.now();
-
-    if (this.rateLimitedUntil > now) {
-      this.error = 'Rate limit reached. Please wait a few minutes and try again.';
-
-      this.loading = false;
-      return;
-    }
-
     this.loading = true;
     this.error = '';
 
-    this.newsService.searchNews(this.filters).subscribe({
+    const shouldUseHomepagePreset =
+      this.filters.category === 'all' &&
+      !this.filters.country &&
+      !this.filters.source &&
+      !this.filters.date &&
+      !this.filters.dataType;
+
+    const favoriteCategories = (this.authService.currentUser?.favorite_categories ?? []).filter(
+      (category): category is Exclude<typeof this.filters.category, 'all'> => category !== 'all'
+    );
+
+    const request$ = shouldUseHomepagePreset
+      ? this.newsService.loadHomeNews(favoriteCategories)
+      : this.newsService.searchNews(this.filters);
+
+    request$.subscribe({
       next: (articles) => {
         this.visibleArticles = [...articles].sort(
           (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
@@ -89,12 +86,7 @@ export class HomePageComponent implements OnInit {
         this.loading = false;
       },
       error: (error: HttpErrorResponse) => {
-        if (error.status === 429) {
-          this.rateLimitedUntil = Date.now() + this.rateLimitWindowMs;
-          this.error = 'Rate limit reached. Please wait a few minutes and try again.';
-        } else {
-          this.error = 'Unable to load news at the moment.';
-        }
+        this.error = error.error?.detail || 'Unable to load news at the moment.';
         this.loading = false;
       }
     });

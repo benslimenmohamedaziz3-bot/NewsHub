@@ -25,6 +25,17 @@ export interface NewsFilters {
   dataType: NewsDataType | '';
 }
 
+export const SUPPORTED_SOURCE_DOMAINS = [
+  'cnn.com',
+  'bbc.com',
+  'reuters.com',
+  'theguardian.com',
+  'cnbc.com',
+  'techcrunch.com'
+] as const;
+
+export const DEFAULT_SUPPORTED_SOURCE = SUPPORTED_SOURCE_DOMAINS[0];
+
 export const COUNTRY_OPTIONS: SelectOption[] = [
   { label: 'All Countries', value: '' },
   { label: 'United States', value: 'us' },
@@ -130,16 +141,12 @@ export const COUNTRY_OPTIONS: SelectOption[] = [
 ];
 
 export const SOURCE_OPTIONS: SelectOption[] = [
-  { label: 'All Sources', value: '' },
-  { label: 'BBC', value: 'bbc.com' },
+  { label: 'All Supported Sources', value: '' },
   { label: 'CNN', value: 'cnn.com' },
+  { label: 'BBC', value: 'bbc.com' },
   { label: 'Reuters', value: 'reuters.com' },
-  { label: 'The New York Times', value: 'nytimes.com' },
   { label: 'The Guardian', value: 'theguardian.com' },
-  { label: 'Al Jazeera', value: 'aljazeera.com' },
-  { label: 'Bloomberg', value: 'bloomberg.com' },
   { label: 'CNBC', value: 'cnbc.com' },
-  { label: 'Forbes', value: 'forbes.com' },
   { label: 'TechCrunch', value: 'techcrunch.com' }
 ];
 

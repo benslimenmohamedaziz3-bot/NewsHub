@@ -26,7 +26,9 @@
     <div class="action-row">
       <span class="byline">By {{ article.sourceName }}</span>
       <button type="button" class="action-btn save-btn" aria-label="Save Article">Save Article</button>
-      <button type="button" class="action-btn ask-btn" aria-label="Ask AI">Ask AI</button>
+      <button type="button" class="action-btn ask-btn" aria-label="Ask AI" (click)="openAskAi()">
+        Ask AI
+      </button>
     </div>
 
     <img [src]="article.imageUrl" [alt]="article.title" class="article-image" />

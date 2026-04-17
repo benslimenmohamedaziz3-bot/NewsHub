@@ -1,4 +1,7 @@
 fastapi
 uvicorn
-mysql-connector-python
 python-multipart
+sqlalchemy
+requests
+PyJWT
+pydantic[email]

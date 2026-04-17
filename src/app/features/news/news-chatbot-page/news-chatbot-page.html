@@ -1,0 +1,77 @@
+<app-header></app-header>
+
+<main class="container chatbot-page">
+  <section *ngIf="loadingArticle" class="state-box card">
+    <p>Preparing the AI assistant...</p>
+  </section>
+
+  <section *ngIf="!loadingArticle && error && !article" class="state-box card error-box">
+    <a routerLink="/" class="back-link" aria-label="Back to News Feed">&larr; Back to News Feed</a>
+    <p>{{ error }}</p>
+  </section>
+
+  <section *ngIf="!loadingArticle && article" class="chatbot-shell">
+    <aside class="article-panel card">
+      <button type="button" class="back-link back-button" (click)="goBackToArticle()">
+        &larr; Back to article
+      </button>
+
+      <span class="eyebrow">AI Assistant</span>
+      <h1>Ask about this story</h1>
+      <p class="article-summary">{{ article.title }}</p>
+      <p class="article-description">{{ article.description }}</p>
+
+      <div class="source-box">
+        <span class="source-label">Original source</span>
+        <a [href]="article.url" target="_blank" rel="noopener noreferrer">{{ article.sourceName }}</a>
+      </div>
+
+      <div *ngIf="extractedTitle" class="source-box source-box--accent">
+        <span class="source-label">Parsed page title</span>
+        <p>{{ extractedTitle }}</p>
+      </div>
+
+      <div *ngIf="sourceExcerpt.length" class="excerpt-box">
+        <span class="source-label">Article evidence used</span>
+        <p *ngFor="let excerpt of sourceExcerpt">{{ excerpt }}</p>
+      </div>
+    </aside>
+
+    <section class="chat-panel card">
+      <div class="messages">
+        <article
+          *ngFor="let message of messages"
+          class="message"
+          [ngClass]="message.role === 'assistant' ? 'assistant-message' : 'user-message'">
+          <span class="message-role">{{ message.role === 'assistant' ? 'AI' : 'You' }}</span>
+          <span *ngIf="message.role === 'assistant' && message.mode" class="message-mode">
+            {{ message.mode === 'article_grounded' ? 'Source-grounded' : 'General assistant' }}
+            <ng-container *ngIf="message.engine">| {{ message.engine }}</ng-container>
+          </span>
+          <p>{{ message.text }}</p>
+        </article>
+      </div>
+
+      <p *ngIf="warning && answerMode === 'article_grounded'" class="inline-warning">{{ warning }}</p>
+      <p *ngIf="error && article" class="inline-error">{{ error }}</p>
+
+      <form class="composer" (ngSubmit)="askQuestion()">
+        <label class="sr-only" for="chat-question">Ask a question about this article</label>
+        <textarea
+          id="chat-question"
+          name="chat-question"
+          [(ngModel)]="question"
+          rows="4"
+          placeholder="Ask about the story, or ask something general..."
+          [disabled]="sending"></textarea>
+
+        <div class="composer-footer">
+          <p>{{ composerHint }}</p>
+          <button type="submit" class="send-btn" [disabled]="sending || !question.trim()">
+            {{ sending ? 'Thinking...' : 'Send to AI' }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </section>
+</main>

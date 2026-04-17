@@ -1,7 +1,7 @@
-import { Component, Output, EventEmitter, inject, ChangeDetectorRef } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { ChangeDetectorRef, Component, EventEmitter, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../../core/services/auth';
 
 @Component({
   selector: 'app-login-form',
@@ -11,39 +11,39 @@ import { HttpClient } from '@angular/common/http';
   styleUrls: ['./login-form.css']
 })
 export class LoginForm {
-  private http = inject(HttpClient);
-  private cdr = inject(ChangeDetectorRef);
+  private readonly authService = inject(AuthService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   form = {
     email: '',
     password: ''
   };
 
-  errorMessage: string = '';
-  showPassword: boolean = false;
-  isLoading: boolean = false;
+  errorMessage = '';
+  showPassword = false;
+  isLoading = false;
 
-  @Output() loginSuccess = new EventEmitter<any>();
+  @Output() loginSuccess = new EventEmitter<{ full_name: string }>();
   @Output() switchToSignup = new EventEmitter<void>();
 
-  togglePassword() {
+  togglePassword(): void {
     this.showPassword = !this.showPassword;
   }
 
-  onSubmit() {
+  onSubmit(): void {
     this.isLoading = true;
     this.errorMessage = '';
     this.cdr.detectChanges();
 
-    this.http.post('http://127.0.0.1:8000/login', this.form).subscribe({
-      next: (res: any) => {
+    this.authService.login(this.form).subscribe({
+      next: (response) => {
         this.isLoading = false;
-        this.loginSuccess.emit(res.user);
+        this.loginSuccess.emit(response.user);
         this.cdr.detectChanges();
       },
-      error: (err) => {
+      error: (error) => {
         this.isLoading = false;
-        this.errorMessage = err.error?.detail || 'Invalid email or password.';
+        this.errorMessage = error.error?.detail || 'Invalid email or password.';
         this.cdr.detectChanges();
       }
     });

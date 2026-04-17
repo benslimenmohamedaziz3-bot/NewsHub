@@ -1,33 +1,36 @@
 <div class="text-center mb-3">
-    <h4>Choose your interests</h4>
-    <p class="text-muted">Select topics you want to follow</p>
-    @if (errorMessage) {
+  <h4>Choose your favorite categories</h4>
+  <p class="text-muted">Select up to 3 categories to receive 7 stories for each one.</p>
+  @if (errorMessage) {
     <div class="alert alert-danger py-2 small">{{ errorMessage }}</div>
-    }
+  }
 </div>
 
-@if (interests.length === 0 && !errorMessage) {
-<div class="text-center py-4">
+@if (categories.length === 0 && !errorMessage) {
+  <div class="text-center py-4">
     <div class="spinner-border spinner-border-sm text-secondary mb-2"></div>
-    <p class="text-muted small">Loading topics...</p>
-</div>
+    <p class="text-muted small">Loading categories...</p>
+  </div>
 }
 
 <div class="row g-2 mb-3">
-    @for (interest of interests; track interest.id) {
+  @for (category of categories; track category.value) {
     <div class="col-6">
-        <div class="border rounded p-2 text-start" [class.bg-dark]="selected.includes(interest.id)"
-            [class.text-white]="selected.includes(interest.id)" style="cursor: pointer;"
-            (click)="toggleInterest(interest.id)">
-            {{ interest.name }}
-        </div>
+      <div
+        class="border rounded p-2 text-start"
+        [class.bg-dark]="selected.includes(category.value)"
+        [class.text-white]="selected.includes(category.value)"
+        style="cursor: pointer;"
+        (click)="toggleInterest(category.value)">
+        {{ category.label }}
+      </div>
     </div>
-    }
+  }
 </div>
 
-<p class="text-muted">Selected: {{ selected.length }} topic(s)</p>
+<p class="text-muted">Selected: {{ selected.length }} / 3</p>
 
 <div class="d-flex gap-2">
-    <button class="btn btn-secondary w-50" (click)="back.emit()">← Back</button>
-    <button class="btn btn-dark w-50" (click)="submit()" [disabled]="selected.length === 0">Complete</button>
+  <button class="btn btn-secondary w-50" (click)="back.emit()">&larr; Back</button>
+  <button class="btn btn-dark w-50" (click)="submit()" [disabled]="selected.length === 0">Complete</button>
 </div>

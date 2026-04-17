@@ -16,8 +16,7 @@
     [sourceOptions]="sourceOptions"
     [dataTypeOptions]="dataTypeOptions"
     [filters]="filters"
-    (filtersChange)="onFiltersChange($event)"
-  ></app-category-filter>
+    (filtersChange)="onFiltersChange($event)"></app-category-filter>
 
   <section *ngIf="loading" class="state-box card">
     <p>Loading news...</p>
@@ -34,8 +33,7 @@
   <section *ngIf="!loading && !error && visibleArticles.length > 0" class="news-grid">
     <app-news-card
       *ngFor="let article of visibleArticles; trackBy: trackByArticle"
-      [article]="article"
-    ></app-news-card>
+      [article]="article"></app-news-card>
   </section>
 </main>
 

@@ -1,19 +1,40 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, forkJoin, map, of, shareReplay, catchError } from 'rxjs';
+import { Observable, catchError, forkJoin, map, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { NewsCategory } from '../models/category.model';
 import { NewsFilters } from '../models/filter.model';
-import { NewsApiArticle, NewsApiResponse, NewsArticle, NewsStore } from '../models/news.model';
+import { NewsArticle } from '../models/news.model';
 
 type RealCategory = Exclude<NewsCategory, 'all'>;
+
+interface NewsApiResponse {
+  status: string;
+  totalResults: number;
+  results: NewsApiArticle[];
+  nextPage?: string;
+}
+
+interface NewsApiArticle {
+  article_id?: string;
+  title?: string;
+  link?: string;
+  description?: string;
+  content?: string;
+  pubDate?: string;
+  image_url?: string;
+  source_id?: string;
+  source_name?: string;
+  category?: string[];
+  country?: string[];
+  language?: string;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class NewsService {
   private readonly http = inject(HttpClient);
-
   private readonly categories: RealCategory[] = [
     'technology',
     'business',
@@ -23,56 +44,55 @@ export class NewsService {
     'sports',
     'health'
   ];
-
-  private newsStore$?: Observable<NewsStore>;
+  private readonly articleCache = new Map<string, NewsArticle>();
 
   getCategories(): RealCategory[] {
     return [...this.categories];
   }
 
-  getAllNews(): Observable<NewsStore> {
-    if (!this.newsStore$) {
-      const requests = this.categories.reduce((acc, category) => {
-        acc[category] = this.getNewsByCategory(category);
-        return acc;
-      }, {} as Record<RealCategory, Observable<NewsArticle[]>>);
-
-      this.newsStore$ = forkJoin(requests).pipe(shareReplay(1));
+  getArticleById(articleId: string, category?: RealCategory): Observable<NewsArticle | null> {
+    const cachedArticle = this.articleCache.get(articleId);
+    if (cachedArticle) {
+      return of(cachedArticle);
     }
 
-    return this.newsStore$;
+    if (!category) {
+      return of(null);
+    }
+
+    return this.searchNews({
+      category,
+      country: '',
+      source: '',
+      date: '',
+      dataType: ''
+    }).pipe(map((articles) => articles.find((article) => article.id === articleId) || null));
   }
 
-  getArticleById(articleId: string, category?: RealCategory): Observable<NewsArticle | null> {
-    if (category) {
-      return this.getNewsByCategory(category).pipe(
-        map((articles) => articles.find((article) => article.id === articleId) || null)
-      );
-    }
+  loadHomeNews(favoriteCategories: RealCategory[] = []): Observable<NewsArticle[]> {
+    const targetCategories = favoriteCategories.length ? favoriteCategories : this.categories;
+    const perCategoryLimit = favoriteCategories.length ? 10 : 5;
 
-    return this.getAllNews().pipe(
-      map((store) => {
-        const allArticles = [
-          ...store.technology,
-          ...store.business,
-          ...store.politics,
-          ...store.science,
-          ...store.entertainment,
-          ...store.sports,
-          ...store.health
-        ];
+    const requests = targetCategories.map((category) =>
+      this.getNewsByCategory(category, perCategoryLimit)
+    );
 
-        return allArticles.find((article) => article.id === articleId) || null;
-      })
+    return forkJoin(requests).pipe(
+      map((groups) => groups.flat()),
+      map((articles) => this.dedupeArticles(articles)),
+      map((articles) =>
+        [...articles].sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+      ),
+      map((articles) => this.cacheArticles(articles))
     );
   }
 
-  getNewsByCategory(category: RealCategory): Observable<NewsArticle[]> {
+  getNewsByCategory(category: RealCategory, size = 5): Observable<NewsArticle[]> {
     const params = new HttpParams()
       .set('apikey', environment.newsApiKey)
-      .set('category', category)
       .set('language', 'en')
-      .set('size', '5');
+      .set('category', category)
+      .set('size', String(size));
 
     return this.http.get<NewsApiResponse>(environment.apiBaseUrl, { params }).pipe(
       map((response) =>
@@ -91,7 +111,7 @@ export class NewsService {
     let params = new HttpParams()
       .set('apikey', environment.newsApiKey)
       .set('language', 'en')
-      .set('size', '10');
+      .set('size', '12');
 
     if (filters.category !== 'all') {
       params = params.set('category', filters.category);
@@ -123,33 +143,30 @@ export class NewsService {
         );
       }),
       map((articles) => articles.filter((article) => !!article.title)),
-      map((articles) => this.dedupeArticles(articles))
+      map((articles) => this.dedupeArticles(articles)),
+      map((articles) => this.cacheArticles(articles)),
+      catchError((error) => {
+        console.error('Failed to load news feed', error);
+        return of([]);
+      })
     );
   }
 
   private mapArticle(item: NewsApiArticle, category: RealCategory, index: number): NewsArticle {
-    console.log(`[NewsService] Article received - Title: ${item.title?.slice(0, 30)}...`, {
-      description: item.description,
-      content: item.content ? 'Available' : 'Missing'
-    });
-
     const title = this.stripHtmlTags(item.title?.trim() || 'Untitled article');
-    
-    // Improved description fallback logic
-    const rawDescription = this.stripHtmlTags(
-      item.description?.trim() || 
-      item.content?.trim() || 
+    const rawDescription = this.resolveReadableText(
+      item.description?.trim(),
+      item.content?.trim(),
       'No description available for this article.'
     );
-    
-    const content = this.resolveReadableContent(item.content, rawDescription);
+    const content = this.resolveReadableText(item.content?.trim(), rawDescription, rawDescription);
     const id = item.article_id || `${category}-${index}-${title}`;
 
     return {
       id,
       title,
-      description: this.truncateText(rawDescription, 160), // Increased from 120
-      content: this.stripHtmlTags(content),
+      description: this.truncateText(rawDescription, 160),
+      content,
       imageUrl: item.image_url || this.getFallbackImage(category),
       sourceName: item.source_name || item.source_id || 'Unknown source',
       publishedAt: item.pubDate || new Date().toISOString(),
@@ -180,33 +197,33 @@ export class NewsService {
     return fallbackCategory;
   }
 
-  private resolveReadableContent(content: string | undefined, fallbackDescription: string): string {
-    const safeContent = content?.trim();
+  private resolveReadableText(
+    primary: string | undefined,
+    fallback: string | undefined,
+    defaultValue: string
+  ): string {
+    const primaryText = this.stripHtmlTags(primary || '');
+    const fallbackText = this.stripHtmlTags(fallback || '');
 
-    if (!safeContent) {
-      return fallbackDescription;
+    if (primaryText && !this.isPaidPlaceholder(primaryText)) {
+      return primaryText;
     }
 
-    const blockedPhrases = [
-      'available only in paid plans',
-      'available in paid plans',
-      'only available in paid plans',
-      'disponible uniquement dans les forfaits payants',
-      'متاح فقط في الخطط المدفوعة', // Arabic
-      'disponible solo en planes de pago', // Spanish
-      'nur in kostenpflichtigen plänen verfügbar', // German
-      'disponível apenas em planos pagos', // Portuguese
-      'disponibile solo nei piani a pagamento', // Italian
-      '仅在付费套餐中提供', // Chinese
-      'premium subscribers',
-      'upgrade to premium',
-      'subscribe to continue reading'
-    ];
+    if (fallbackText && !this.isPaidPlaceholder(fallbackText)) {
+      return fallbackText;
+    }
 
-    const normalized = safeContent.toLowerCase();
-    const hasBlockedPhrase = blockedPhrases.some((phrase) => normalized.includes(phrase));
+    return defaultValue;
+  }
 
-    return hasBlockedPhrase ? fallbackDescription : safeContent;
+  private isPaidPlaceholder(text: string): boolean {
+    const normalized = text.toLowerCase();
+    return (
+      normalized.includes('only available in paid plans') ||
+      normalized.includes('available in paid plans') ||
+      normalized.includes('premium subscribers') ||
+      normalized.includes('subscribe to continue reading')
+    );
   }
 
   private truncateText(text: string, maxLength: number): string {
@@ -218,8 +235,11 @@ export class NewsService {
   }
 
   private stripHtmlTags(text: string): string {
-    if (!text) return '';
-    return text.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ');
+    if (!text) {
+      return '';
+    }
+
+    return text.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
   }
 
   private dedupeArticles(articles: NewsArticle[]): NewsArticle[] {
@@ -251,5 +271,10 @@ export class NewsService {
 
   private getFallbackImage(category: RealCategory): string {
     return `https://placehold.co/800x500?text=${category}`;
+  }
+
+  private cacheArticles(articles: NewsArticle[]): NewsArticle[] {
+    articles.forEach((article) => this.articleCache.set(article.id, article));
+    return articles;
   }
 }

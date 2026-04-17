@@ -1,7 +1,6 @@
-import { Component, Output, EventEmitter, OnInit, inject, ChangeDetectorRef } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { timeout } from 'rxjs';
+import { CategoryApiOption } from '../../../core/models/auth.model';
 
 @Component({
   selector: 'app-interests-form',
@@ -10,45 +9,31 @@ import { timeout } from 'rxjs';
   templateUrl: './interests-form.html',
   styleUrls: ['./interests-form.css']
 })
-export class InterestsForm implements OnInit {
-  private http = inject(HttpClient);
-  private cdr = inject(ChangeDetectorRef);
-
+export class InterestsForm {
+  @Input({ required: true }) categories: CategoryApiOption[] = [];
   @Output() back = new EventEmitter<void>();
-  @Output() complete = new EventEmitter<number[]>();
+  @Output() complete = new EventEmitter<string[]>();
 
-  interests: any[] = [];
-  selected: number[] = [];
-  errorMessage: string = '';
+  selected: string[] = [];
+  errorMessage = '';
 
-  ngOnInit() {
-    this.http.get<any[]>('http://127.0.0.1:8000/interests')
-      .pipe(timeout(10000))
-      .subscribe({
-        next: (data) => {
-          this.interests = data;
-          this.cdr.detectChanges();
-          if (data.length === 0) {
-            this.errorMessage = 'No interests found in the database.';
-          }
-        },
-        error: (err) => {
-          console.error('Interests load error:', err);
-          this.errorMessage = 'Could not fetch interests. Please check your connection.';
-          this.cdr.detectChanges();
-        }
-      });
-  }
-
-  toggleInterest(id: number) {
-    if (this.selected.includes(id)) {
-      this.selected = this.selected.filter(i => i !== id);
-    } else {
-      this.selected.push(id);
+  toggleInterest(category: string): void {
+    if (this.selected.includes(category)) {
+      this.selected = this.selected.filter((item) => item !== category);
+      this.errorMessage = '';
+      return;
     }
+
+    if (this.selected.length >= 3) {
+      this.errorMessage = 'You can choose a maximum of 3 favorite categories.';
+      return;
+    }
+
+    this.selected = [...this.selected, category];
+    this.errorMessage = '';
   }
 
-  submit() {
+  submit(): void {
     this.complete.emit(this.selected);
   }
 }

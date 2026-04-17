@@ -1,6 +1,6 @@
 import { DatePipe, NgIf, TitleCasePipe } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NewsCategory } from '../../../core/models/category.model';
 import { NewsArticle } from '../../../core/models/news.model';
 import { NewsService } from '../../../core/services/news';
@@ -15,6 +15,7 @@ import { HeaderComponent } from '../../../shared/components/header/header';
 })
 export class NewsDetailsPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly newsService = inject(NewsService);
 
   article: NewsArticle | null = null;
@@ -50,6 +51,17 @@ export class NewsDetailsPageComponent implements OnInit {
         this.error = 'Unable to load article details right now.';
         this.loading = false;
       }
+    });
+  }
+
+  openAskAi(): void {
+    if (!this.article) {
+      return;
+    }
+
+    void this.router.navigate(['/details', this.article.id, 'ask-ai'], {
+      queryParams: { category: this.article.category },
+      state: { article: this.article }
     });
   }
 }

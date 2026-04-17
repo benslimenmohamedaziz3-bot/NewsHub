@@ -30,7 +30,7 @@ export class CategoryFilterComponent {
     this.filtersChange.emit({
       category,
       country: '',
-      source: '',
+      source: this.filters.source,
       date: '',
       dataType: ''
     });
@@ -41,7 +41,7 @@ export class CategoryFilterComponent {
     this.filtersChange.emit({
       category: 'all',
       country: value,
-      source: '',
+      source: this.filters.source,
       date: '',
       dataType: ''
     });
@@ -63,7 +63,7 @@ export class CategoryFilterComponent {
     this.filtersChange.emit({
       category: 'all',
       country: '',
-      source: '',
+      source: this.filters.source,
       date: value,
       dataType: ''
     });
@@ -74,7 +74,7 @@ export class CategoryFilterComponent {
     this.filtersChange.emit({
       category: 'all',
       country: '',
-      source: '',
+      source: this.filters.source,
       date: '',
       dataType: value
     });
